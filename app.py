@@ -65,7 +65,7 @@ class Book(db.Model):
 
 class BookSchema(ma.Schema):
     class Meta:
-        fields = ('id', 'title')
+        fields = ('id', 'title', 'author')
 
 # Commands
 
