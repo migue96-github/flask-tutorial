@@ -55,8 +55,55 @@ def _get_response(name: str, age: int):
         return jsonify(message='Should be 18 or older'), 401
     return jsonify(message=f'{name}, you are older than 18')
 
+@app.route ('/register', methods=['POST'])
+def register():
+    email = request.form['email']
+    test = User.query.filter_by(email=email).first()
+    if test:
+        return jsonify(message='That email already exist. '),409
+    else:
+        first_name = request.form['first_name' ]
+        last_name = request.form['last_name']
+        password = request.form['password']
+        user = User(first_name=first_name, last_name=last_name,email=email,password=password)
+        db.session.add(user)
+        db.session.commit()
+        return jsonify(message='User created successfully. '),201
+    
+
+@app.route('/Users', methods=['GET'])
+def get_users():
+    users = User.query.all()
+    users_serializer = UserSchema(many=True)
+    results = users_serializer.dump(users)
+    return jsonify(data=results)
+
+'''
+Create an end-point /login
+Use method POST and receive as a form email and password
+If user exists with the same password and email -> respond user authenticated
+Else -> respond user not authenticated
+'''
+
+@app.route ('/login', methods=['POST'])
+def login():
+    email = request.form['email']
+    password = request.form['password']
+    test = User.query.filter_by(email=email, password=password).first()
+    if test:
+        return jsonify(message='User has logged in. ')
+    else:
+        return jsonify(message= 'Username/Password is not correct. ')
 
 # Models
+class User(db.Model):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True)
+    first_name = Column(String)
+    last_name = Column(String)
+    email = Column(String, unique=True)
+    password = Column(String)
+
 class Book(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     author = Column(String, nullable=False)
@@ -66,6 +113,11 @@ class Book(db.Model):
 class BookSchema(ma.Schema):
     class Meta:
         fields = ('id', 'title', 'author')
+
+class UserSchema(ma.Schema):
+    class Meta:
+        fields = ('first_name', 'last_name', 'id', 'email')
+
 
 # Commands
 
