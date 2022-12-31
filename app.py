@@ -3,6 +3,7 @@ import os
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, String, Integer
+from flask_marshmallow import Marshmallow
 
 app = Flask(__name__)
 
@@ -11,6 +12,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, DB_NAME)}'
 
 db = SQLAlchemy(app)
+ma = Marshmallow(app)
 
 
 @app.route('/')
@@ -43,7 +45,9 @@ def url_parameters(name: str, age: int):
 @app.route('/books', methods=['GET'])
 def get_books():
     books = Book.query.all()
-    return jsonify(data=[book.as_json() for book in books])
+    books_serializer = BookSchema(many=True)
+    results = books_serializer.dump(books)
+    return jsonify(data=results)
 
 
 def _get_response(name: str, age: int):
@@ -58,12 +62,10 @@ class Book(db.Model):
     author = Column(String, nullable=False)
     title = Column(String, nullable=False)
 
-    def as_json(self):
-        return {
-            "id": self.id,
-            "author": self.author,
-            "title": self.title
-        }
+
+class BookSchema(ma.Schema):
+    class Meta:
+        fields = ('id', 'title')
 
 # Commands
 
